@@ -198,9 +198,13 @@
         }
         &:hover{
           font-size: 17px;
-          color: #409EFF;
-          border-color: #c6e2ff;
-          background-color: #ecf5ff;
+          /*color: #409EFF;*/
+          /*border-color: #c6e2ff;*/
+          /*background-color: #ecf5ff;*/
+          color: #ffffff;
+          border-color: #c6e2ff00;
+          background-color: #ecf5ff40;
+          box-shadow: inset 0 0 2px 1px #ffffff1f;
         }
         span{
           font-size: inherit;
@@ -209,9 +213,9 @@
     }
     &:hover{
       .website.none, .title-btn {
-        background: #FFF;
-        border: 1px solid #DCDFE6;
-        color: #606266;
+        /*background: #FFF;*/
+        /*border: 1px solid #DCDFE6;*/
+        /*color: #606266;*/
       }
     }
 
@@ -220,13 +224,16 @@
       border: none;
       color: white;
       /*margin-left: 5px;*/
-      text-shadow: 1px 1px 4px white;
+      /*text-shadow: 1px 1px 4px white;*/
       min-width: 33%;
       max-width: 90%;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
       height: 40px;
+      font-weight: bold;
+      font-size: 15px;
+      background-color: #ffffff05;
       &:hover{
         color: #409EFF;
         border-color: #c6e2ff;

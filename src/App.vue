@@ -5,6 +5,7 @@
 <!--    <div style="background: url('./assets/bg.png')"></div>-->
 <!--    <img alt="Vue logo" src="./assets/bg.png">-->
 <!--    <HelloWorld msg="Welcome to Your Vue.js App"/>-->
+    <div class="bg-blur-overlay"></div>
     <div class="main">
       <v-header :edit.sync="edit"></v-header>
       <div class="content">
@@ -77,6 +78,7 @@ export default {
   height: 100%;
   width: 100%;
   position: relative;
+  background-color: #232728;
 }
   html, body{
     margin: 0;
@@ -91,5 +93,17 @@ export default {
     width: 1024px;
     text-align: center;
     margin: 0 auto;
+  }
+  .bg-blur-overlay{
+    background-image: url(/img/bg.f3321c0b.png);
+    min-height: 100vh;
+    min-width: 100vw;
+    z-index: 0;
+    position: absolute;
+    -webkit-filter: blur(6px);
+    -moz-filter: blur(6px);
+    -ms-filter: blur(6px);
+    filter: blur(6px);
+    filter: progid:DXImageTransform.Microsoft.Blur(PixelRadius=6, MakeShadow=false);
   }
 </style>
