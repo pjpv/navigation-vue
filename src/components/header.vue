@@ -105,14 +105,14 @@ export default {
           "bing": 'https://cn.bing.com/search?q=%s'
         }
         const url = ENGINE[searchEngine]
-        const searchUrl = url.replace('%s', encodeURI(keyword))
+        const searchUrl = url.replace('%s', encodeURIComponent(keyword))
         const newWindow = window.open(searchUrl);
         newWindow.focus();
         resolve()
       })
     },
     fetchBaiduSug(wd) {
-      const url = `https://sp0.baidu.com/5a1Fazu8AA54nxGko9WTAnF6hhy/su?wd=${wd}&json=1`
+      const url = `https://sp0.baidu.com/5a1Fazu8AA54nxGko9WTAnF6hhy/su?wd=${encodeURIComponent(wd)}&json=1`
       return new Promise(resolve => {
         getJSONP(url, 'cb').then(res => {
           const list = res.s.map(s => {
@@ -125,7 +125,7 @@ export default {
       })
     },
     fetchGoogleSug(wd) {
-      const url = `https://www.google.com/complete/search?wd=${wd}&client=psy-ab&hl=zh-CN&gs_ri=psy-ab&cp=4&gs_id=&gr=&q=${wd}&xhr=t`
+      const url = `https://www.google.com/complete/search?wd=${wd}&client=psy-ab&hl=zh-CN&gs_ri=psy-ab&cp=4&gs_id=&gr=&q=${encodeURIComponent(wd)}&xhr=t`
       return new Promise(resolve => {
         getJSONP(url, 'callback').then(data => {
           const list = []
