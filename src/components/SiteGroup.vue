@@ -22,6 +22,7 @@
         </el-form-item>
         <el-form-item v-if="!editGroupTitle" label="网址" label-width="80px">
           <el-input v-model="form.url" clearable>
+<!--             @change="onChangeUrl" -->
             <el-select v-model="protocol" slot="prepend" placeholder="请选择" style="width: 100px;">
               <el-option label="http://" :value="0"></el-option>
               <el-option label="https://" :value="1"></el-option>
@@ -39,8 +40,10 @@
 </template>
 
 <script>
+  import request from '../Utils/http'
   const REG_HTTP = new RegExp(/^http:\/\//)
   const REG_HTTPS = new RegExp(/^https:\/\//)
+  const REG_OTHER = new RegExp(/^(.+?:\/\/).*/)
   export default {
     name: "SiteGroup",
     props: {
@@ -98,7 +101,13 @@
         } else if(val.match(REG_HTTPS)) {
           this.form.url = val.replace(REG_HTTPS, '')
           this.protocol = 1
+        } else {
+          const o = val.match(REG_OTHER)
+          if (o) {
+            this.protocol = ''
+          }
         }
+        this.onChangeUrl(val)
       }
     },
     mounted() {
@@ -139,14 +148,28 @@
         }
         // item.name += 'aaa'
         if (item.url) {
-          window.open(item.url)
+          if (/^(chrome|chrome-extension):\/\/.*/.test(item.url)) {
+            chrome.tabs.update({ url: item.url })
+          } else {
+            window.open(item.url)
+          }
         }
       },
       onSave() {
         if (this.editGroupTitle){
           this.siteList.title = this.form.name
         } else {
-          const protocol = this.protocol === 1 ? 'https://' : 'http://'
+          let protocol = ''
+          switch (this.protocol) {
+            case 1:
+              protocol = 'https://'
+              break
+            case 2:
+              protocol = 'http://'
+              break
+            default:
+              break
+          }
           this.siteList.data[this.editIndex].name = this.form.name
           this.siteList.data[this.editIndex].url = protocol + this.form.url
         }
@@ -159,6 +182,26 @@
           this.dialogVisible = true
           return
         }
+      },
+      onChangeUrl(url) {
+        const rege = /^.*?\..*$/
+        if (rege.test(url) && !REG_OTHER.test(url)) {
+          const protocol = this.protocol === 1 ? 'https://' : 'http://'
+          this.getTitle(protocol + url).then(title => {
+            this.form.name = title
+          })
+        }
+      },
+      getTitle(url) {
+        return new Promise((resolve) => {
+          request.get(url).then(res => {
+            // eslint-disable-next-line no-useless-escape
+            const r = res.data.match(/\<title\>(.*?)\<\/title\>/)
+            if (r) {
+              resolve(r[1])
+            }
+          })
+        })
       }
     }
   }
