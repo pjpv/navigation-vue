@@ -61,9 +61,9 @@
       </el-input>
       <span slot="footer" class="dialog-footer">
     <el-button @click="dialogVisible = false">取 消</el-button>
-    <el-button type="primary" @click="handleDataCopy">复 制</el-button>
+    <el-button type="success" @click="handleDataCopy">复 制</el-button>
     <el-button type="primary" @click="handleDataPaste">粘 贴</el-button>
-    <el-button type="primary" @click="handleDataUpdate">保 存</el-button>
+    <el-button type="warning" @click="handleDataUpdate">保 存</el-button>
   </span>
     </el-dialog>
   </div>
@@ -71,6 +71,7 @@
 
 <script>
   import {getJSONP} from "../Utils/jsonp"
+  import {getData, setData} from "../Utils/store"
 
   const EMPTY = /(^\s*)|(\s*$)/g
   export default {
@@ -198,13 +199,19 @@
         e.target.blur();
       },
       loadData() {
-        this.currentData = localStorage.getItem('sitelist')
+        // this.currentData = localStorage.getItem('sitelist')
+        getData().then(data => {
+          this.currentData = data
+        })
       },
       handleDataUpdate() {
-        localStorage.setItem('sitelist', this.currentData)
-        this.dialogVisible = false
-        this.$emit('update')
-        this.$message.success('修改成功')
+        // localStorage.setItem('sitelist', this.currentData)
+        setData(this.currentData)
+          .then(() => {
+            this.dialogVisible = false
+            this.$emit('update')
+            this.$message.success('修改成功')
+          })
       },
       handleDataPaste() {
 

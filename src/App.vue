@@ -26,6 +26,7 @@
 <script>
 import vHeader from './components/header'
 import SiteGroup from './components/SiteGroup'
+import {getData, setData} from "./Utils/store"
 
 export default {
   name: 'app',
@@ -43,7 +44,7 @@ export default {
     siteGroupList: {
       deep: true,
       handler(val){
-        localStorage.setItem('sitelist', JSON.stringify(val))
+        setData(JSON.stringify(val))
       }
     }
   },
@@ -54,24 +55,26 @@ export default {
     loadData() {
       return new Promise((resolve, reject) => {
         try {
-          const s = JSON.parse(localStorage.getItem('sitelist'))
-          if (s) {
-            this.siteGroupList = s
-            resolve()
-          }else {
-            this.siteGroupList = [...Array(9)].map(() => {
-              return {
-                title: '分组',
-                data: [...Array(9)].map(() => {
-                  return {
-                    name: '',
-                    url: ''
-                  }
-                })
-              }
-            })
-            resolve()
-          }
+          getData().then(data => {
+            const s = JSON.parse(data)
+            if (s) {
+              this.siteGroupList = s
+              resolve()
+            }else {
+              this.siteGroupList = [...Array(9)].map(() => {
+                return {
+                  title: '分组',
+                  data: [...Array(9)].map(() => {
+                    return {
+                      name: '',
+                      url: ''
+                    }
+                  })
+                }
+              })
+              resolve()
+            }
+          })
         } catch (e) {
           reject()
         }
