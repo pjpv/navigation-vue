@@ -7,16 +7,21 @@
 <!--    <HelloWorld msg="Welcome to Your Vue.js App"/>-->
     <div class="bg-blur-overlay"></div>
     <div class="main">
-      <v-header :edit.sync="edit" @update="loadData"></v-header>
+      <v-header :edit.sync="edit" @update="loadData" @addGroup="onAddGroup"></v-header>
       <div class="content">
-        <el-row>
-          <el-col
-                  :span="8"
+        <el-row class="content-row">
+          <div
+                  :span="24"
+                  :xl="12"
+                  :lg="12"
+                  class="group-wrapper"
                   v-for="(group, index) in siteGroupList"
                   :key="index"
           >
-            <SiteGroup :data.sync="group" :edit="edit"></SiteGroup>
-          </el-col>
+
+            <SiteGroup
+              :data.sync="group" :edit="edit" @deleteGroup="() => onDeleteGroup(index)"></SiteGroup>
+          </div>
         </el-row>
       </div>
     </div>
@@ -79,6 +84,15 @@ export default {
           reject()
         }
       })
+    },
+    onAddGroup(name) {
+      this.siteGroupList.push({
+        title: name,
+        data: []
+      })
+    },
+    onDeleteGroup(index) {
+      this.siteGroupList.splice(index, 1)
     }
   }
 }
@@ -86,22 +100,22 @@ export default {
 
 <style lang="scss">
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /*text-align: center;*/
-  color: #2c3e50;
-  height: 100%;
-  width: 100%;
-  position: relative;
-  background-color: #232728;
-  background-size: 100% 100%;
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #2c3e50;
+    position: relative;
+    background-color: #232728;
+    background-size: 100% 100%
+}
+
+#app, body, html {
+    height: 100%;
+    width: 100%
 }
   html, body{
     margin: 0;
     padding: 0;
-    height: 100%;
-    width: 100%;
   }
   .main{
     /*padding: 60px 100px;*/
@@ -119,9 +133,21 @@ export default {
     min-height: 738px;
   }
   .content{
-    width: 1000px;
-    text-align: center;
-    margin: 0 auto;
+  width: 1000px;
+  text-align: center;
+  margin: 20px auto;
+  overflow: auto;
+  height: calc(100vh - 100px);
+    .content-row {
+      column-count: 2;
+      column-gap: 0;
+    }
+    .group-wrapper {
+      width: 100%;
+      display: inline-block;
+
+      vertical-align: top;
+    }
   }
   .bg-blur-overlay{
     background-image: url(/img/bg.f3321c0b.png);
@@ -168,10 +194,10 @@ export default {
 }
 @media screen and (min-width: 1367px) and (max-width: 1440px){
   .main {
-    padding-top: 80px;
+    padding-top: 18px;
     /deep/ {
       .header {
-        padding-bottom: 50px;
+        padding-bottom: 10px;
         .header-row {
           /*padding: 0 130px;*/
         }

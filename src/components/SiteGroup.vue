@@ -2,6 +2,23 @@
   <div class="site-group">
     <el-row style="text-align: left;">
       <el-button class="title-btn" @click="onClickTitle">{{ this.data.title }}</el-button>
+      <el-button-group>
+        <el-button
+          v-if="edit"
+          type="primary"
+          icon="el-icon-plus"
+          round
+          @click="onAddItem"
+          @focus.native="handleFocus"/>
+        <el-button
+          v-if="edit"
+          type="primary"
+          icon="el-icon-close"
+          round
+          style=""
+          @click="onDeleteGroup"
+          @focus.native="handleFocus"/>
+      </el-button-group>
     </el-row>
     <el-row v-for="(row,i) in tableData" :key="i" class="website-row">
       <div
@@ -12,21 +29,25 @@
         }"
         class="website"
         @click="onClick(c, i*3+j)"
-      >{{ c.name }}</div>
+      >{{ c.name }}
+        <el-icon
+          v-if="edit"
+          type="primary"
+          class="el-icon-close"
+          round
+          style="    float: right;"
+          @click.native="(e) => onDelete(e, i*3+j)"
+          @focus.native="handleFocus"/>
+        </div>
     </el-row>
 
-    <el-dialog :title="editGroupTitle? '编辑 - '+ this.data.title : editTitle" :visible.sync="dialogVisible">
+    <el-dialog :title="editGroupTitle? '编辑 - '+ this.data.title : editTitle" :close-on-click-modal="false" :visible.sync="dialogVisible">
       <el-form :model="form">
         <el-form-item label="名称" label-width="80px">
           <el-input v-model="form.name" clearable></el-input>
         </el-form-item>
         <el-form-item v-if="!editGroupTitle" label="网址" label-width="80px">
           <el-input v-model="form.url" clearable>
-<!--             @change="onChangeUrl" -->
-            <el-select v-model="protocol" slot="prepend" placeholder="请选择" style="width: 100px;">
-              <el-option label="http://" :value="0"></el-option>
-              <el-option label="https://" :value="1"></el-option>
-            </el-select>
           </el-input>
 
         </el-form-item>
@@ -36,14 +57,29 @@
         <el-button type="primary" @click="onSave">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="新增网址" :close-on-click-modal="false" :visible.sync="addDialogVisible">
+      <el-form :model="addForm">
+        <el-form-item label="名称" label-width="80px">
+          <el-input v-model="addForm.name" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="网址" label-width="80px">
+          <el-input v-model="addForm.url" clearable></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="onAddWebsite">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
   import request from '../Utils/http'
-  const REG_HTTP = new RegExp(/^http:\/\//)
-  const REG_HTTPS = new RegExp(/^https:\/\//)
-  const REG_OTHER = new RegExp(/^(.+?:\/\/).*/)
+  const REG_HTTP = new RegExp(/^http:\/\/.+/)
+  const REG_HTTPS = new RegExp(/^https:\/\/.+/)
+  // const REG_OTHER = new RegExp(/^(.+?:\/\/).*/)
+  const REG_URL = new RegExp(/^([a-zA-z]+:\/\/)(.+)/)
   export default {
     name: "SiteGroup",
     props: {
@@ -70,11 +106,15 @@
         dialogVisible: false,
         editIndex: 0,
         editGroupTitle: false,
-        protocol: 1,
         form: {
           name: '',
           url: ''
-        }
+        },
+        addForm: {
+          name: '',
+          url: '',
+        },
+        addDialogVisible: false,
       }
     },
     computed: {
@@ -94,31 +134,9 @@
           this.$emit('update:data', val)
         }
       },
-      'form.url'(val) {
-        if (val.match(REG_HTTP)) {
-          this.form.url = val.replace(REG_HTTP, '')
-          this.protocol = 0
-        } else if(val.match(REG_HTTPS)) {
-          this.form.url = val.replace(REG_HTTPS, '')
-          this.protocol = 1
-        } else {
-          const o = val.match(REG_OTHER)
-          if (o) {
-            this.protocol = ''
-          }
-        }
-        this.onChangeUrl(val)
-      }
     },
     mounted() {
       this.initData()
-      // this.siteList = [...Array(9)].map(() => {
-      //   return {
-      //     url: '',
-      //     name: 'none',
-      //   }
-      // })
-      // this.initData()
     },
     methods: {
 
@@ -148,10 +166,18 @@
         }
         // item.name += 'aaa'
         if (item.url) {
-          if (/^(chrome|chrome-extension):\/\/.*/.test(item.url)) {
-            chrome.tabs.update({ url: item.url })
-          } else {
-            window.open(item.url)
+          const url = item.url
+          // if (/^(chrome|chrome-extension):\/\/.*/.test(item.url)) {
+          //   chrome.tabs.update({ url: item.url })
+          // } else {
+          //   window.open(item.url)
+          // }
+          if (REG_URL.test(url)) {
+            if (REG_HTTPS.test(url) || REG_HTTP.test(url)) {
+              window.open(url)
+            } else {
+              chrome.tabs.create({ url: item.url })
+            }
           }
         }
       },
@@ -159,19 +185,8 @@
         if (this.editGroupTitle){
           this.siteList.title = this.form.name
         } else {
-          let protocol = ''
-          switch (this.protocol) {
-            case 1:
-              protocol = 'https://'
-              break
-            case 2:
-              protocol = 'http://'
-              break
-            default:
-              break
-          }
           this.siteList.data[this.editIndex].name = this.form.name
-          this.siteList.data[this.editIndex].url = protocol + this.form.url
+          this.siteList.data[this.editIndex].url = this.form.url
         }
         this.dialogVisible = false
       },
@@ -184,10 +199,12 @@
         }
       },
       onChangeUrl(url) {
-        const rege = /^.*?\..*$/
-        if (rege.test(url) && !REG_OTHER.test(url)) {
-          const protocol = this.protocol === 1 ? 'https://' : 'http://'
-          this.getTitle(protocol + url).then(title => {
+        if (url.replace(/ /g, '').length === 0) {
+          return
+        }
+        let u = url
+        if ((REG_HTTP.test(u) || REG_HTTPS.test(u)) && REG_URL.test(u)) {
+          this.getTitle(u).then(title => {
             this.form.name = title
           })
         }
@@ -202,6 +219,36 @@
             }
           })
         })
+      },
+      handleFocus(e) {
+        e.target.blur()
+      },
+      onDeleteGroup() {
+        this.$emit('deleteGroup')
+      },
+      onAddItem() {
+        this.addDialogVisible = true
+      },
+      onAddWebsite() {
+        const { name, url } = this.addForm
+        console.log('onAddWebsite', name, url)
+        this.addDialogVisible = false
+        this.siteList.data.push({
+          name,
+          url
+        })
+        this.addForm.name = ''
+        this.addForm.url = ''
+        this.initData()
+        this.$forceUpdate()
+      },
+      onDelete(e, i) {
+        console.log('onDelete', e, i)
+        e.stopPropagation()
+        e.preventDefault()
+        this.siteList.data.splice(i, 1)
+        this.initData()
+        this.$forceUpdate()
       }
     }
   }
@@ -211,33 +258,44 @@
   .site-group {
     margin: 10px 5px;
     .website-row {
+      padding-right: 30px;
       .website{
-        display: inline-block;
-        margin: 2px;
-        background: #FFF;
-        border: 1px solid #DCDFE6;
-        color: #606266;
-        width: calc(33% - 15px);
-        /*width: 100px;*/
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        padding-left: 5px;
-        padding-right: 5px;
-        min-height: 45px;
-        height: 45px;
-        line-height: 45px;
-        border-radius: 4px;
-        cursor: pointer;
-        user-select: none;
-        font-size: 14px;
-
-        transition-property: background-color, color, font-size;
-        transition-duration: 0.2s;
-        transition-timing-function: ease;
+          display: inline-block;
+          margin: 2px;
+          background: #fff;
+          border: 1px solid #dcdfe6;
+          border: none;
+          color: #606266;
+          width: calc(33% - 15px);
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          padding-left: 10px;
+          padding-right: 10px;
+          height: auto;
+          line-height: 1.3;
+          border-radius: 4px;
+          cursor: pointer;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          font-size: 14px;
+          font-weight: bold;
+          -webkit-transition-property: background-color, color, font-size;
+          transition-property: background-color, color, font-size;
+          -webkit-transition-duration: .2s;
+          transition-duration: .2s;
+          -webkit-transition-timing-function: ease;
+          transition-timing-function: ease;
+          width: 100%;
+          text-align: left;
+          background: transparent;
+          color: #FFFFFF;
         &.none {
           background: transparent;
           border: 1px solid transparent;
+          display: none;
         }
         &:hover{
           font-size: 17px;
@@ -268,15 +326,16 @@
       color: white;
       /*margin-left: 5px;*/
       /*text-shadow: 1px 1px 4px white;*/
-      min-width: 33%;
-      max-width: 90%;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      height: 40px;
-      font-weight: bold;
-      font-size: 15px;
-      background-color: #ffffff05;
+    min-width: 33%;
+    max-width: 90%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    height: 40px;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: left;
+    background-color: hsla(0, 0%, 100%, .02)
       &:hover{
         color: #409EFF;
         border-color: #c6e2ff;
